@@ -1,14 +1,15 @@
 from dotenv import load_dotenv
 import os
 import sqlalchemy as sa
-from sqlalchemy import Column, Integer, String, Date, Float, Boolean, select
-from sqlalchemy.orm import declarative_base, Session
+from sqlalchemy import Column, Integer, String, Date, Float, Boolean
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import func
 
 from sqlalchemy.orm import sessionmaker
 import urllib.parse
 
 from datetime import date, timedelta
+from notifiers import get_notifier
 
 load_dotenv()
 
@@ -128,38 +129,68 @@ if __name__ == '__main__':
 
     with Session.begin() as session:
         # всего продаж
-        total_sells = session.query(Deals).filter(Deals.agreement_date != None).count()
+        total_sells = session.query(Deals).\
+                      filter(Deals.agreement_date != None).count()
         # продажи вчера
-        yesterday_sells = session.query(Deals).filter(Deals.agreement_date == (date.today() - timedelta(days=1))).count()
+        yesterday_sells = session.query(Deals). \
+                          filter(Deals.agreement_date == (date.today() - timedelta(days=1))).count()
         # продажи сегодня
-        today_sells = session.query(Deals).filter(Deals.agreement_date == date.today()).count()
+        today_sells = session.query(Deals). \
+                      filter(Deals.agreement_date == date.today()).count()
+
         # целевых заявок вчера
-        yesterday_target_leads = session.query(Leads).filter(Leads.date_added == (date.today() - timedelta(days=1))).count()
+        yesterday_target_leads = session.query(Leads). \
+                                 filter(Leads.date_added == (date.today() - timedelta(days=1)),
+                                        Leads.status != '0',
+                                        Leads.status != '3',
+                                        Leads.status != '5').count()
         # целевых заявок сегодня
-        today_target_leads = session.query(Leads).filter(Leads.date_added == date.today()).count()
+        today_target_leads = session.query(Leads).\
+                             filter(Leads.date_added == date.today(),
+                                    Leads.status != '0',
+                                    Leads.status != '3',
+                                    Leads.status != '5').count()
+
+        # бесплатных броней вчера
+        yesterday_booking_free_count = session.query(func.count(Deals.id),
+                                                 func.coalesce(func.sum(Deals.summ), 0)). \
+            filter(Deals.status_modified_date == date.today() - timedelta(days=1),
+                   Deals.status == 105,
+                   Deals.is_payed_reserve == 0).all()
+
+        # платных броней вчера
+        yesterday_booking_paid_count = session.query(func.count(Deals.id),
+                                                 func.coalesce(func.sum(Deals.summ), 0)). \
+            filter(Deals.status_modified_date == date.today() - timedelta(days=1),
+                   Deals.status == 105,
+                   Deals.is_payed_reserve == 1).all()
 
         # бесплатных броней сегодня
         today_booking_free_count = session.query(func.count(Deals.id),
-                                                 func.coalesce(func.sum(Deals.summ), 0)).\
+                                                 func.coalesce(func.sum(Deals.summ), 0)). \
                                    filter(Deals.status_modified_date == date.today(),
                                           Deals.status == 105,
                                           Deals.is_payed_reserve == 0).all()
 
         # платных броней сегодня
         today_booking_paid_count = session.query(func.count(Deals.id),
-                                                 func.coalesce(func.sum(Deals.summ), 0)).\
+                                                 func.coalesce(func.sum(Deals.summ), 0)). \
                                    filter(Deals.status_modified_date == date.today(),
                                           Deals.status == 105,
                                           Deals.is_payed_reserve == 1).all()
-    print(
-          f'всего продаж - {total_sells}\n'
-          f'продаж вчера - {yesterday_sells}\n'
-          f'продаж сегодня - {today_sells}\n'
-          f'целевых заявок вчера - {yesterday_target_leads}\n'
-          f'целевых заявок сегодня - {today_target_leads}\n'
-          f'бесплатных броней вчера - {today_booking_free_count[0][0]}\n'
-          f'бесплатных броней сегодня - {today_booking_free_count[0][1]}\n'
-          f'платных броней вчера - {today_booking_paid_count[0][0]}\n'
-          f'платных броней сегодня - {today_booking_paid_count[0][1]}\n'
-          )
+
+
+    msg= (
+        f'всего продаж - {total_sells}\n'
+        f'продаж вчера - {yesterday_sells}\n'
+        f'продаж сегодня - {today_sells}\n'
+        f'целевых заявок вчера - {yesterday_target_leads}\n'
+        f'целевых заявок сегодня - {today_target_leads}\n'
+        f'бесплатных броней сегодня: кол-во - {today_booking_free_count[0][0]}, сумма - {today_booking_free_count[0][1]}\n'
+        f'бесплатных броней вчера: кол-во - {yesterday_booking_free_count[0][0]}, сумма - {yesterday_booking_free_count[0][1]}\n'        
+        f'платных броней сегодня: кол-во - {today_booking_paid_count[0][0]}, сумма - {today_booking_paid_count[0][1]}\n'
+        f'платных броней вчера: кол-во - {yesterday_booking_paid_count[0][0]}, сумма - {yesterday_booking_paid_count[0][1]}\n'
+    )
+    telegram = get_notifier('telegram')
+    telegram.notify(message=msg, token=os.environ.get('telegram_token'), chat_id=os.environ.get('chat_id'))
 
