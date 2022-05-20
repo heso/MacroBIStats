@@ -1,43 +1,38 @@
 from datetime import date, timedelta
-from alchemy import get_target_leads_count, get_sells_price_and_count, get_booking_price_and_count
+from alchemy import StatDeals, StatBooking
 import telebot
 import os
 
 
-def main():
+def main(use_telegram: bool = True):
     today = date.today()
     yesterday = date.today() - timedelta(days=1)
 
+    today = yesterday
+
     # всего продаж
-    today_sells = get_sells_price_and_count(today, today)
-    # целевых заявок вчера
-    yesterday_target_leads = get_target_leads_count(yesterday, yesterday)
+    today_sells = StatDeals(today, today)
     # целевых заявок сегодня
-    today_target_leads = get_target_leads_count(today, today)
+    # today_target_leads = get_target_leads_count(today, today)
     # бесплатных броней сегодня
-    today_booking_free_count = get_booking_price_and_count(today, today, booking_paid=False)
+    booking_free = StatBooking(today, today, False)
     # платных броней сегодня
-    today_booking_paid_count = get_booking_price_and_count(today, today, booking_paid=True)
+    booking_paid = StatBooking(today, today, True)
 
-    max_len = max(len(str(today_booking_free_count[0][0])),
-                  len(str(today_sells[0][0])),
-                  len(str(today_booking_paid_count[0][0])))
+    booking_free_spaces = ' ' * (booking_free.max_len - len(str(booking_free.flat_count)))
+    booking_paid_spaces = ' ' * (booking_paid.max_len - len(str(booking_paid.flat_count)))
+    sells_spaces = ' ' * (today_sells.max_len - len(str(today_sells.flat_count)))
 
-    booking_free_spaces = ' ' * (max_len - len(str(today_booking_free_count[0][0])))
-    booking_paid_spaces = ' ' * (max_len - len(str(today_booking_paid_count[0][0])))
-    sells_spaces = ' ' * (max_len - len(str(today_sells[0][0])))
+    msg = f'''Беспл. брони: {booking_free.flat_count} шт.{booking_free_spaces}\\ {booking_free.flat_price} млн.\n
+              Плат. брони:  {booking_paid.flat_count} шт.{booking_paid_spaces}\\ {booking_paid.flat_price} млн.\n
+              Договоры:     {today_sells.flat_count} шт.{sells_spaces}\\ {today_sells.flat_price} млн/'''
 
-
-    msg = (f'{today}\n\n`'
-        f'Лиды:         {today_target_leads} шт.\n'
-        f'Беспл. брони: {today_booking_free_count[0][0]} шт.{booking_free_spaces}\\ {round(today_booking_free_count[0][1]/10**6,1)} млн.\n'
-        f'Плат. брони:  {today_booking_paid_count[0][0]} шт.{booking_paid_spaces}\\ {round(today_booking_paid_count[0][1]/10**6,1)} млн.\n\n'
-        f'Договоры:     {today_sells[0][0]} шт.{sells_spaces}\\ {round(today_sells[0][1]/10**6,1)} млн.\n`'
-    )
-
-    bot = telebot.TeleBot(os.environ.get('telegram_token'))
-    bot.send_message(os.environ.get('chat_id'),  msg , parse_mode='Markdown')
+    if use_telegram:
+        bot = telebot.TeleBot(os.environ.get('telegram_token'))
+        bot.send_message(os.environ.get('chat_id'), msg, parse_mode='Markdown')
+    else:
+        print(msg)
 
 
 if __name__ == '__main__':
-    main()
+    main(False)

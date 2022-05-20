@@ -3,9 +3,10 @@ import os
 import sqlalchemy as sa
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean
 from sqlalchemy.orm import declarative_base
-
+from dataclasses import dataclass
 
 from sqlalchemy.orm import sessionmaker
+
 import urllib.parse
 
 load_dotenv()
@@ -21,6 +22,7 @@ engine = sa.create_engine(f'{driver_name}://{user}:{password}@{host}:{port}/{db_
 Base = declarative_base()
 
 
+@dataclass
 class Deals(Base):
     __tablename__ = 'deals'
 
@@ -43,29 +45,8 @@ class Deals(Base):
     complex_name = Column(String)
     house_name = Column(String)
 
-    def __init__(self, id, agreement_date, date_modified, status_modified_date, area, category, status,
-                 is_payed_reserve, summ, bank, bank_name, deal_program, agent, mediator_comission,
-                 id_house, type_rus, complex_name, house_name):
-        self.id = id
-        self.agreement_date = agreement_date
-        self.date_modified = date_modified
-        self.status_modified_date = status_modified_date
-        self.area = area
-        self.category = category
-        self.status = status
-        self.is_payed_reserve = is_payed_reserve
-        self.summ = summ
-        self.bank = bank
-        self.bank_name = bank_name
-        self.deal_program = deal_program
-        self.agent = agent
-        self.mediator_comission = mediator_comission
-        self.id_house = id_house
-        self.type_rus = type_rus
-        self.complex_name = complex_name
-        self.house_name = house_name
 
-
+@dataclass
 class Leads(Base):
     __tablename__ = 'leads'
 
@@ -78,17 +59,8 @@ class Leads(Base):
     complex_name = Column(String)
     house_name = Column(String)
 
-    def __init__(self, id, date_added, category, status, id_house, type_rus, complex_name, house_name):
-        self.id = id
-        self.date_added = date_added
-        self.category = category
-        self.status = status
-        self.id_house = id_house
-        self.type_rus = type_rus
-        self.complex_name = complex_name
-        self.house_name = house_name
 
-
+@dataclass
 class Houses(Base):
     __tablename__ = 'houses'
 
@@ -99,24 +71,13 @@ class Houses(Base):
     house_address = Column(String)
     house_status = Column(Integer)
 
-    def __init__(self, house_id, house_name, complex_id, complex_name, house_address, house_status):
-        self.house_id = house_id
-        self.house_name = house_name
-        self.complex_id = complex_id
-        self.complex_name = complex_name
-        self.house_address = house_address
-        self.house_status = house_status
 
-
+@dataclass
 class TypesTranslations(Base):
     __tablename__ = 'types_translations'
 
     type_eng = Column(String, primary_key=True)
     type_rus = Column(String)
-
-    def __init__(self, type_eng, type_rus):
-        self.type_eng = type_eng
-        self.type_rus = type_rus
 
 
 def get_session() -> sessionmaker:
