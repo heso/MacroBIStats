@@ -18,7 +18,7 @@ user = os.environ.get('db_username')
 password = urllib.parse.quote_plus(os.environ.get('db_password'))
 db_name = os.environ.get('db_base')
 
-engine = sa.create_engine(f'{driver_name}://{user}:{password}@{host}:{port}/{db_name}')  # , echo=True)
+engine = sa.create_engine(f'{driver_name}://{user}:{password}@{host}:{port}/{db_name}', pool_size=10, max_overflow=20)  # , echo=True)
 Base = declarative_base()
 
 
@@ -81,9 +81,9 @@ class TypesTranslations(Base):
 
 
 def get_session() -> sessionmaker:
-    Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine)
     return session
+
 
 if __name__ == '__main__':
     pass
