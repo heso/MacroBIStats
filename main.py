@@ -8,7 +8,7 @@ import re
 chat_id = os.environ.get('chat_id')
 token = os.environ.get('telegram_token')
 bot = telebot.TeleBot(token)
-regexp_pattern = r'(\d{2}\.\d{2}\.\d{4})(,\s*)(\d{2}\.\d{2}\.\d{4})'
+regexp_pattern = r'(\d{2}\.\d{2}\.\d{4})(\s*,\s*)(\d{2}\.\d{2}\.\d{4})'
 
 
 markup = types.ReplyKeyboardMarkup(row_width=3)
@@ -20,7 +20,7 @@ markup.add(btn_stat_today)
 markup.add(btn_stat_yesterday)
 markup.add(btn_stat_period)
 
-bot.send_message(chat_id, "статистика", reply_markup=markup)
+# bot.send_message(chat_id, "статистика", reply_markup=markup)
 
 
 def get_statistics(date_from, date_to):
@@ -30,9 +30,9 @@ def get_statistics(date_from, date_to):
     booking_paid = StatBooking(date_from, date_to, True)
 
     if date_from == date_to:
-        interval = date_from
+        interval = date_from.strftime('%d.%m.%Y')
     else:
-        interval = f'`Период с` {date_from} `по` {date_to}'
+        interval = f'`Период с` {date_from.strftime("%d.%m.%Y")} `по` {date_to.strftime("%d.%m.%Y")}'
 
     return (f'{interval}\n\n'
             f'`Лиды:         {leads_count} шт.\n\n'
@@ -43,8 +43,8 @@ def get_statistics(date_from, date_to):
 
 def test_statistics(message):
     return message.text in ['статистика за сегодня',
-                       'статистика за вчера',
-                       'статистика за период']
+                            'статистика за вчера',
+                            'статистика за период']
 
 
 @bot.message_handler(func=test_statistics)
@@ -74,5 +74,4 @@ def send_statistics(message):
         bot.send_message(chat_id, text, parse_mode='Markdown')
 
 
-bot.infinity_polling()
-
+bot.infinity_polling(timeout=10, long_polling_timeout=5)
