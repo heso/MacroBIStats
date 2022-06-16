@@ -8,9 +8,10 @@ from typing import Union
 categories = {'all': '',
               'flat': '- квартиры:   ',
               'house': '- дома:       ',
-              'comm': '- земля:      ',
-              'land': '- коммерция:  ',
-              'other': '- всякое:     '}
+              'comm': '- коммерция:  ',
+              'land': '- земля:      ',
+              'garage': '- парковки:   ',
+              'storageroom': '- кладовки:   '}
 
 
 @dataclass
@@ -25,7 +26,8 @@ class StatDeals:
         self.house_count, self.house_price = get_sells_stats(self.date_from, self.date_to, ['house'])[0]
         self.comm_count, self.comm_price = get_sells_stats(self.date_from, self.date_to, ['comm'])[0]
         self.land_count, self.land_price = get_sells_stats(self.date_from, self.date_to, ['land'])[0]
-        self.other_count, self.other_price = get_sells_stats(self.date_from, self.date_to, ['garage', 'storageroom'])[0]
+        self.garage_count, self.garage_price = get_sells_stats(self.date_from, self.date_to, ['garage'])[0]
+        self.storageroom_count, self.storageroom_price = get_sells_stats(self.date_from, self.date_to, ['storageroom'])[0]
 
     def get_stats(self):
         name_all = 'Договоры:     '
@@ -45,7 +47,8 @@ class StatBooking:
         self.house_count, self.house_price = get_booking_stats(self.date_from, self.date_to, self.isBookingPaid, ['house'])[0]
         self.comm_count, self.comm_price = get_booking_stats(self.date_from,  self.date_to, self.isBookingPaid, ['comm'])[0]
         self.land_count, self.land_price = get_booking_stats(self.date_from, self.date_to, self.isBookingPaid, ['land'])[0]
-        self.other_count, self.other_price = get_booking_stats(self.date_from, self.date_to, self.isBookingPaid, ['garage', 'storageroom'])[0]
+        self.garage_count, self.garage_price = get_booking_stats(self.date_from, self.date_to, self.isBookingPaid, ['garage'])[0]
+        self.storageroom_count, self.storageroom_price = get_booking_stats(self.date_from, self.date_to, self.isBookingPaid, ['storageroom'])[0]
 
     def get_stats(self):
         if self.isBookingPaid:
@@ -73,7 +76,8 @@ def max_len(cls: Union[StatDeals, StatBooking]) -> int:
                  len(str(cls.house_count)),
                  len(str(cls.comm_count)),
                  len(str(cls.land_count)),
-                 len(str(cls.other_count)))
+                 len(str(cls.garage_count)),
+                 len(str(cls.storageroom_count)))
     return result
 
 
@@ -82,5 +86,5 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
+    main()
 
