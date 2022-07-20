@@ -14,13 +14,15 @@ regexp_pattern = r'(\d{2}\.\d{2}\.\d{4})(\s*,\s*)(\d{2}\.\d{2}\.\d{4})'
 markup = types.ReplyKeyboardMarkup(row_width=3)
 btn_stat_today = types.KeyboardButton('статистика за сегодня')
 btn_stat_yesterday = types.KeyboardButton('статистика за вчера')
+btn_stat_month = types.KeyboardButton('статистика за текущий месяц')
 btn_stat_period = types.KeyboardButton('статистика за период')
 
 markup.add(btn_stat_today)
 markup.add(btn_stat_yesterday)
+markup.add(btn_stat_month)
 markup.add(btn_stat_period)
 
-# bot.send_message(chat_id, "статистика", reply_markup=markup)
+bot.send_message(chat_id, "статистика", reply_markup=markup)
 
 
 def get_statistics(date_from, date_to):
@@ -44,7 +46,8 @@ def get_statistics(date_from, date_to):
 def test_statistics(message):
     return message.text in ['статистика за сегодня',
                             'статистика за вчера',
-                            'статистика за период']
+                            'статистика за период',
+                            'статистика за текущий месяц']
 
 
 @bot.message_handler(func=test_statistics)
@@ -58,6 +61,10 @@ def send_statistics(message):
             case 'статистика за вчера':
                 date_stat = date.today() - timedelta(days=1)
                 text = get_statistics(date_stat, date_stat)
+            case 'статистика за текущий месяц':
+                date_from = dt.today().replace(day=1)
+                date_to = date.today()
+                text = get_statistics(date_from, date_to)
             case 'статистика за период':
                 text = '`Введите через запятую две даты в формате   дд.мм.гггг\nНапример:`\n12.09.2021, 02.10.2022'
         bot.send_message(chat_id, text, parse_mode='Markdown')
